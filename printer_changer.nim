@@ -17,7 +17,7 @@ import
 type
   # A menu ID in wNim is type of wCommandID (distinct int) or any enum type.
   MenuID = enum
-   idExit
+    idExit = wIdUser
 
 proc get_default_printer(): string = # get the default printer
   var needed: DWORD
@@ -74,12 +74,10 @@ frame.wEvent_Menu do (event: wEvent):
   var item = trayMenu.getSubMenu(0).findItem(event.id)
   if item != nil:
     SetDefaultPrinter(item.text) # change default printer
-    echo "Printer set to: " & item.text
   event.skip
 
 frame.wEvent_TrayRightUp do (event: wEvent): # right click on tray icon -> Menu
   update_printer_menu()
   frame.popupMenu(trayMenu)
-  event.skip
 
 app.mainLoop()
