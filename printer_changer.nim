@@ -1,21 +1,13 @@
 #========================================================================
 #
-#                         LN CHECKER 
+#                      Default Printer Changer
 #                (c) Copyright 2019 Duncan Clarke
-#
-#
-#  This program checks LN every five minutes for production orders that:
-#  
-#  1. Completed but have outstanding material issued or recieved.
-#  2. Fully delivered, but order is still active.
 #
 #========================================================================
 
 # icon resource file
 # windres ln_checker.rc ln_checker.o --target=pe-i386
 {.link: "printer_changer.o".}
-  
-
 
 import
   wNim,
@@ -84,7 +76,7 @@ frame.wEvent_Menu do (event: wEvent):
     SetDefaultPrinter(item.text) # change default printer
     echo "Printer set to: " & item.text
   event.skip
-  
+
 frame.wEvent_TrayRightUp do (event: wEvent): # right click on tray icon -> Menu
   update_printer_menu()
   frame.popupMenu(trayMenu)
