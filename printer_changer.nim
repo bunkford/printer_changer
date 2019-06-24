@@ -12,12 +12,13 @@
 import
   wNim,
   winim/lean,
-  winim/inc/winspool
-
+  winim/inc/winspool,
+  os
+  
 type
   # A menu ID in wNim is type of wCommandID (distinct int) or any enum type.
   MenuID = enum
-    idExit = wIdUser
+    idExit = wIdUser, idProperties, idQueue
 
 proc get_default_printer(): string = # get the default printer
   var needed: DWORD
@@ -42,8 +43,15 @@ var frame = Frame()
 frame.icon = icon
 frame.setTrayIcon(icon)
 
+# menu to change default printer
+var menuDefaultPrinter = Menu()
+menuDefaultPrinter.append(idProperties, "Properties", "Default Printer Properties")
+menuDefaultPrinter.append(idQueue, "Queue", "Default Printer Properties")
+
 # menu for when you right click on tray icon
 var trayMenu = Menu() 
+trayMenu.appendSeparator()
+trayMenu.appendSubMenu(menuDefaultPrinter, get_default_printer(), "Default Printer")
 trayMenu.appendSeparator()
 trayMenu.append(idExit, "E&xit", "Exit the program.", exitBmp)
 
@@ -70,14 +78,23 @@ proc update_printer_menu(): void = # check default printer and mark it checked
 frame.idExit do ():
   frame.delete
 
+frame.idProperties do ():
+  discard execShellCmd("RUNDLL32.EXE PRINTUI.DLL,PrintUIEntry /p /n" & get_default_printer())
+
+frame.idQueue do ():
+  discard execShellCmd("RUNDLL32.EXE PRINTUI.DLL,PrintUIEntry /o /n" & get_default_printer())
+
+
 frame.wEvent_Menu do (event: wEvent):
   var item = trayMenu.getSubMenu(0).findItem(event.id)
   if item != nil:
+    trayMenu.setText(2, item.text)
     SetDefaultPrinter(item.text) # change default printer
   event.skip
 
 frame.wEvent_TrayRightUp do (event: wEvent): # right click on tray icon -> Menu
   update_printer_menu()
+  trayMenu.setText(2, get_default_printer())
   frame.popupMenu(trayMenu)
 
 app.mainLoop()
