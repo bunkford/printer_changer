@@ -13,8 +13,8 @@ import
   wNim,
   winim/lean,
   winim/inc/winspool,
-  os
-  
+  osproc
+
 type
   # A menu ID in wNim is type of wCommandID (distinct int) or any enum type.
   MenuID = enum
@@ -79,10 +79,10 @@ frame.idExit do ():
   frame.delete
 
 frame.idProperties do ():
-  discard execShellCmd("RUNDLL32.EXE PRINTUI.DLL,PrintUIEntry /p /n" & get_default_printer())
+  discard execCmd("RUNDLL32.EXE PRINTUI.DLL,PrintUIEntry /p /n" & get_default_printer())
 
 frame.idQueue do ():
-  discard execShellCmd("RUNDLL32.EXE PRINTUI.DLL,PrintUIEntry /o /n" & get_default_printer())
+  discard execCmd("RUNDLL32.EXE PRINTUI.DLL,PrintUIEntry /o /n" & get_default_printer())
 
 
 frame.wEvent_Menu do (event: wEvent):
