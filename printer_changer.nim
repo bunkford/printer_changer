@@ -92,6 +92,9 @@ frame.wEvent_Menu do (event: wEvent):
     SetDefaultPrinter(item.text) # change default printer
   event.skip
 
+frame.wEvent_TrayMove do (event: wEvent): # move mouse over tray
+  frame.setTrayIcon(icon, get_default_printer())
+
 frame.wEvent_TrayRightUp do (event: wEvent): # right click on tray icon -> Menu
   update_printer_menu()
   trayMenu.setText(2, get_default_printer())
