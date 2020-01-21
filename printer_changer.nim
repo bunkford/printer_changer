@@ -13,7 +13,8 @@ import
   wNim,
   winim/lean,
   winim/inc/winspool,
-  osproc
+  osproc,
+  algorithm
 
 type
   # A menu ID in wNim is type of wCommandID (distinct int) or any enum type.
@@ -29,10 +30,10 @@ proc get_default_printer(): string = # get the default printer
 
 # load icons
 const exit = staticRead(r"icons/quit.ico") 
-let exitBmp = Bmp(Image(exit).scale(16, 16))
+let exitBitmap = Bitmap(Image(exit).scale(16, 16))
 
 const printer = staticRead(r"icons/printer.ico")
-let printerBmp = Bmp(Image(printer).scale(16, 16))
+let printerBitmap = Bitmap(Image(printer).scale(16, 16))
 
 const ico = staticRead(r"icons/printer.ico")
 let icon = Icon(ico)
@@ -53,7 +54,7 @@ var trayMenu = Menu()
 trayMenu.appendSeparator()
 trayMenu.appendSubMenu(menuDefaultPrinter, get_default_printer(), "Default Printer")
 trayMenu.appendSeparator()
-trayMenu.append(idExit, "E&xit", "Exit the program.", exitBmp)
+trayMenu.append(idExit, "E&xit", "Exit the program.", exitBitmap)
 
 # iterate over local printers and network printers we've made a connection to
 var menuPrinters = Menu()
@@ -63,11 +64,17 @@ var buffer = newString(needed)
 let pInfo = cast[LPBYTE](&buffer)
 let printers = cast[ptr UncheckedArray[PRINTER_INFO_1]](pInfo)
 EnumPrinters(PRINTER_ENUM_CONNECTIONS or PRINTER_ENUM_LOCAL, nil, 1, pInfo, needed, &needed, &returned)
+
+var printer_names: seq[string]
 for i in 0..<returned:
-  menuPrinters.appendRadioItem(i, $(printers[i].pName), $(printers[i].pName))  
+  printer_names.add($(printers[i].pName))
+printer_names.sort()
+
+for i in 0..<returned:
+  menuPrinters.appendRadioItem(wCommandID i, printer_names[i], printer_names[i])  
   
 # insert sub menu containing printers
-trayMenu.insertSubMenu(0, menuPrinters, "Set Printer", "Change Default Printer.", printerBmp)
+trayMenu.insertSubMenu(0, menuPrinters, "Set Printer", "Change Default Printer.", printerBitmap)
 
 proc update_printer_menu(): void = # check default printer and mark it checked
   var default = get_default_printer()
