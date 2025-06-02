@@ -1,0 +1,59 @@
+name: Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest]
+        include:
+          - os: windows-latest
+            output_name: printer_changer.exe
+            asset_name: printer_changer.exe
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Nim
+        uses: jiro4989/setup-nim-action@v2
+        with:
+          nim-version: 'stable'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build
+        run: nim c -d:release -o:${{ matrix.output_name }} lightburn.nim
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.asset_name }}
+          path: ${{ matrix.output_name }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+      - name: Install GitHub CLI
+        run: sudo apt-get update && sudo apt-get install gh -y
+      - name: Delete all releases and tag
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release list --limit 100 | awk '{print $1}' | xargs -r -I {} gh release delete {} -y
+          git push origin --delete Latest || true
+      - name: Create Latest release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: Latest
+          name: Latest
+          files: artifacts/**/*
+          generate_release_notes: true
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
