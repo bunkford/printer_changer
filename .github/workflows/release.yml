@@ -23,7 +23,7 @@ jobs:
           nim-version: '2.0.2'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
       - name: Install dependencies
-        run: nimble install wnim winim
+        run: nimble install -y wnim winim
       - name: Compile resource file
         run: windres printer_changer.rc -O coff -o printer_changer.o
       - name: Build
