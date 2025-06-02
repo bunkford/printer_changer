@@ -22,6 +22,10 @@ jobs:
         with:
           nim-version: 'stable'
           repo-token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Install dependencies
+        run: nimble install wnim winim
+      - name: Compile resource file
+        run: windres printer_changer.rc -O coff -o printer_changer.o
       - name: Build
         run: nim c -d:release -o:${{ matrix.output_name }} printer_changer.nim
       - name: Upload artifact
