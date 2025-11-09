@@ -6,11 +6,12 @@
 #========================================================================
 
 # icon resource file
-# windres ln_checker.rc ln_checker.o --target=pe-i386
+# windres printer_changer.rc printer_changer.o --target=pe-i386
 {.link: "printer_changer.o".}
 
 import
   wNim,
+  wDarkMode,  # nimble install https://github.com/bunkford/wDarkMode@#HEAD
   winim/lean,
   winim/inc/winspool,
   osproc,
@@ -39,6 +40,9 @@ const ico = staticRead(r"icons/printer.ico")
 let icon = Icon(ico)
 
 var app = App()
+
+#enable dark mode
+app.enableDarkMode()
 
 var frame = Frame()
 frame.icon = icon
@@ -107,4 +111,5 @@ frame.wEvent_TrayRightUp do (event: wEvent): # right click on tray icon -> Menu
   trayMenu.setText(2, get_default_printer())
   frame.popupMenu(trayMenu)
 
+frame.applyDarkModeToWindow(enable=true)
 app.mainLoop()
