@@ -5,17 +5,56 @@
 #
 #========================================================================
 
-# icon resource file
-# windres printer_changer.rc printer_changer.o --target=pe-i386
-{.link: "printer_changer.o".}
+# icon and version resource file, 64-bit by default:
+#   windres printer_changer.rc -O coff -o printer_changer.o
+# a 32-bit build links its own (windres --target=pe-i386), named with -d:resourceObject=<file>
+const resourceObject {.strdefine.} = "printer_changer.o"
+{.link: resourceObject.}
 
 import
   wNim,
   wDarkMode,  # nimble install https://github.com/bunkford/wDarkMode@#HEAD
   winim/lean,
   winim/inc/winspool,
+  winim/inc/tlhelp32,
+  os,
   osproc,
+  strutils,
   algorithm
+
+# "printer_changer --quit" closes the copies of this program that are already running: the
+# installer runs it before it replaces or removes the program, which Windows can't do while
+# it is in use. A running copy answers this message by exiting.
+let quitMessage = RegisterWindowMessage("PrinterChangerQuit")
+
+proc quit_running_copies() =
+  let
+    me = GetCurrentProcessId()
+    name = getAppFilename().extractFilename
+  var running: seq[HANDLE]
+  let snapshot = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0)
+  if snapshot != INVALID_HANDLE_VALUE:
+    var entry: PROCESSENTRY32
+    entry.dwSize = DWORD sizeof(entry)
+    if Process32First(snapshot, &entry) != 0:
+      while true:
+        if entry.th32ProcessID != me and cmpIgnoreCase(nullTerminated($$entry.szExeFile), name) == 0:
+          let process = OpenProcess(SYNCHRONIZE or PROCESS_TERMINATE, FALSE, entry.th32ProcessID)
+          if process != 0: running.add process
+        if Process32Next(snapshot, &entry) == 0: break
+    CloseHandle(snapshot)
+  if running.len == 0: return
+  # ask them to exit (so each takes its tray icon with it), and end any that has not after 5 seconds
+  PostMessage(HWND_BROADCAST, quitMessage, 0, 0)
+  for process in running:
+    if WaitForSingleObject(process, 5000) != WAIT_OBJECT_0:
+      TerminateProcess(process, 0)
+      WaitForSingleObject(process, 2000)
+    CloseHandle(process)
+
+if paramCount() > 0 and paramStr(1) == "--quit":
+  quit_running_copies()
+  quit(0)
 
 type
   # A menu ID in wNim is type of wCommandID (distinct int) or any enum type.
@@ -25,6 +64,7 @@ type
 proc get_default_printer(): string = # get the default printer
   var needed: DWORD
   GetDefaultPrinter(nil, &needed)
+  if needed < 2: return "" # no default printer (no printers at all)
   var buffer = newWString(int needed)
   GetDefaultPrinter(&buffer, &needed)
   return $(buffer)[0 .. ^2] # trim trailing null character
@@ -111,6 +151,9 @@ proc update_printer_menu(): void = # check default printer and mark it checked
       i.check(true)
 
 frame.idExit do ():
+  frame.delete
+
+frame.connect(quitMessage) do (): # "printer_changer --quit" asks every running copy to exit
   frame.delete
 
 frame.idProperties do ():

@@ -1,1 +1,35 @@
+// The program's icon and its details (Properties > Details, Task Manager's Startup apps):
+//   windres printer_changer.rc -O coff -o printer_changer.o
+// A release build passes its version: -D PC_VERSION_NUM=1,2,3,0 -D PC_VERSION_TEXT=\"1.2.3\"
+#ifndef PC_VERSION_NUM
+#define PC_VERSION_NUM 0,0,0,0
+#define PC_VERSION_TEXT "development"
+#endif
+
 nimicon ICON "icons/printer.ico"
+
+1 VERSIONINFO
+FILEVERSION PC_VERSION_NUM
+PRODUCTVERSION PC_VERSION_NUM
+FILEOS 0x40004
+FILETYPE 0x1
+BEGIN
+  BLOCK "StringFileInfo"
+  BEGIN
+    BLOCK "040904b0"
+    BEGIN
+      VALUE "CompanyName", "Duncan Clarke"
+      VALUE "FileDescription", "Printer Changer"
+      VALUE "FileVersion", PC_VERSION_TEXT
+      VALUE "InternalName", "printer_changer"
+      VALUE "LegalCopyright", "Copyright \xA9 2019 Duncan Clarke"
+      VALUE "OriginalFilename", "printer_changer.exe"
+      VALUE "ProductName", "Printer Changer"
+      VALUE "ProductVersion", PC_VERSION_TEXT
+    END
+  END
+  BLOCK "VarFileInfo"
+  BEGIN
+    VALUE "Translation", 0x409, 1200
+  END
+END
