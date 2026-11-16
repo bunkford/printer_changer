@@ -1,2 +1,7 @@
 nimcache/
 *.exe
+*.msi
+
+# built downloads, and the release tools: both stay on the computer that makes releases
+dist/
+release/
